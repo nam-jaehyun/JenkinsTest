@@ -46,5 +46,29 @@ pipeline {
         }
       }
     }
+
+    stage('SonarQube Analysis') {
+      steps {
+        withSonarQubeEnv('LocalSonarQube') {
+          script {
+            def scannerHome = tool 'SonarQubeScanner'
+            sh """
+              set -e
+              test -f reports/coverage.xml || echo '<coverage/>' > reports/coverage.xml
+              "${scannerHome}/bin/sonar-scanner"
+            """
+          }
+        }
+      }
+    }
+
+    stage('Quality Gate') {
+      steps {
+        timeout(time: 5, unit: 'MINUTES') {
+          waitForQualityGate abortPipeline: true
+        }
+      }
+    }
+
   }
 }
